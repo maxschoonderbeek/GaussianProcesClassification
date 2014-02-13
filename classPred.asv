@@ -1,0 +1,3 @@
+function lp = classPred(y, mu, s2)
+
+lp = likLogistic1(y, mu)

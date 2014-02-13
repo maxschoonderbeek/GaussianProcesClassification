@@ -28,7 +28,6 @@ lik = @likLogistic1;            % Likelihood
 piStarMAP = @likLogistic1;      % MAP prediction
 piStarPred = @classPred;        % Class prediction as in Bishop p
 piStarAvg = @cdfLogistic;       % Averaged prediction 
-piStarErf = @predErf;
 
 %% My implementation
 tic
@@ -39,7 +38,6 @@ hyp0.lik = [];
 % dbstop in optimizeHyp
 % dbstop in posteriorMode
 % dbstop in brentmin
-% dbstop in predErf
 
 hyp = optimizeHyp(hyp0, -Ncg, inference, cov, lik, xtr, ytr);   % opt hypers
 hyp.cov
@@ -47,34 +45,42 @@ alpha = zeros(ntr,1);
 % log marginal liklihood and posterior
 [post{2},nlZ(2)] = posteriorMode(hyp, alpha, cov,lik,xtr,ytr); % without stored 'alpha'
 % Predict
-Pred = {@origFunction,@likLogistic1,@cdfLogistic,@classPred,@predErf};
+Pred = {0,@likLogistic1,@cdfLogistic,@classPred};
 m=length(Pred);
 for n = 2:m
-    [ymu{n}, ys2{n},fmu{n},fs2{n}] = predict(hyp, post{2}, cov, Pred{n}, xtr, xte);  % predict
+[ymu{n}, ys2{n},fmu{n},fs2{n}] = predict(hyp, post{2}, cov, Pred{n}, xtr, xte);  % predict
+[ymu{3}, ys2{3},fmu{3},fs2{3}] = predict(hyp, post{2}, cov, piStarAvg, xtr, xte);  % predict
+[ymu{4}, ys2{4},fmu{4},fs2{4}] = predict(hyp, post{2}, cov, piStarAvg, xtr, xte);  
 end
 toc
 
 %% Plot results
 figure, hold on
-leg = {};
-for n=1:m
-  plot(xte,ymu{n},'Color',col{n},'LineWidth',2)
-  leg{end+1} = sprintf('%s',func2str(Pred{n}));
+for i=1:3
+  plot(xte,ymu{i},'Color',col{i},'LineWidth',2)
+  if i==1
+    leg = {'function'};
+  else if i==2
+    leg{end+1} = sprintf('MAP ymu');
+  else if i==3
+    leg{end+1} = sprintf('Avg ymu');                          
+      end
+      end
+  end
 end
-% plot(xte,fmu{2},'Color',col{6},'LineWidth',2)
-% leg{end+1} = sprintf('fmu (latent)');
-% ysd = sdscale*sqrt(fs2{2});
-% fill([xte;flipud(xte)],[fmu{i}+ysd;flipud(fmu{i}-ysd)],...
-%      col{2},'EdgeColor',col{6},'FaceAlpha',0.1,'EdgeAlpha',0.3);
-% ylim([-5 5])
+plot(xte,fmu{2},'Color',col{6},'LineWidth',2)
+leg{end+1} = sprintf('fmu (latent)');
+ysd = sdscale*sqrt(fs2{2});
+fill([xte;flipud(xte)],[fmu{i}+ysd;flipud(fmu{i}-ysd)],...
+     col{2},'EdgeColor',col{6},'FaceAlpha',0.1,'EdgeAlpha',0.3);
 
-for i=1:m
+for i=1:3
   ysd = sdscale*sqrt(ys2{i});
   fill([xte;flipud(xte)],[ymu{i}+ysd;flipud(ymu{i}-ysd)],...
        col{i},'EdgeColor',col{i},'FaceAlpha',0.1,'EdgeAlpha',0.3);
 end
 
 plot(xtr,ytr,'k+'), plot(xtr,ytr,'ko'), legend(leg,'Location','best')
-
+ylim([-5 5])
 
 
