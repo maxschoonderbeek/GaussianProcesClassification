@@ -25,21 +25,22 @@ fmu{1} = 0; fs2{1} = 0;
 cov = @covSqExp;                % Covarience kernel
 inference = @inferLaplace;      % Inference function
 lik = @likLogistic1;            % Likelihood 
-piStarMAP = @likLogistic1;      % MAP prediction
+% piStarMAP = @predMAP;      % MAP prediction
 piStarPred = @classPred;        % Class prediction as in Bishop p
 piStarAvg = @cdfLogistic;       % Averaged prediction 
-piStarErf = @predErf;
+piStarErf = @predErf;           % Class prediction with Error function
 
 %% My implementation
 tic
 hyp0.lik = [];
 
 % dbstop in inference
-% dbstop in predict
+dbstop in predict
 % dbstop in optimizeHyp
 % dbstop in posteriorMode
 % dbstop in brentmin
 % dbstop in predErf
+% dbstop in predApproxProbit
 
 hyp = optimizeHyp(hyp0, -Ncg, inference, cov, lik, xtr, ytr);   % opt hypers
 hyp.cov
@@ -47,10 +48,10 @@ alpha = zeros(ntr,1);
 % log marginal liklihood and posterior
 [post{2},nlZ(2)] = posteriorMode(hyp, alpha, cov,lik,xtr,ytr); % without stored 'alpha'
 % Predict
-Pred = {@origFunction,@likLogistic1,@cdfLogistic,@classPred,@predErf};
+Pred = {@origFunction,@predMAP,@cdfLogistic,@predApproxProbit,@predErf};
 m=length(Pred);
 for n = 2:m
-    [ymu{n}, ys2{n},fmu{n},fs2{n}] = predict(hyp, post{2}, cov, Pred{n}, xtr, xte);  % predict
+    [ymu{n}, ys2{n},fmu{n},fs2{n}] = predict(hyp, post{2}, cov,lik, Pred{n}, xtr, xte);  % predict
 end
 toc
 

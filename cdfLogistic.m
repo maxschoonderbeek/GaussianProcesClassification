@@ -1,4 +1,4 @@
-function [lp,ymu,ys2] = cdfLogistic(y, mu, s2)
+function [lp,ymu,ys2] = cdfLogistic(mu, s2,lik)
 
 % likLogistic - logistic function for binary classification or logit regression.
 % The expression for the likelihood is 
@@ -14,7 +14,8 @@ function [lp,ymu,ys2] = cdfLogistic(y, mu, s2)
 
 inf = 'infEP';
 
-y = y.*ones(size(mu));                                       % make y a vector
+
+y = ones(size(mu));                                       % make y a vector
 
 % likLogistic(t) \approx 1/2 + \sum_{i=1}^5 (c_i/2) erf(lam_i/sqrt(2)t)
 lam = sqrt(2)*[0.44 0.41 0.40 0.39 0.36];    % approx coeffs lam_i and c_i

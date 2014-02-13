@@ -38,6 +38,7 @@ inference = @inferLaplace;      % Inference function
 lik = @likLogistic1;            % Likelihood 
 piStarMAP = @likLogistic1;      % MAP prediction
 piStarAvg = @cdfLogistic;       % Averaged prediction 
+piStarErf = @predErf;
 
 % dbstop posteriorMode
 % dbstop predict
@@ -54,7 +55,7 @@ hyp{2} = optimizeHyp(hyp{1}, -50, inference, cov{2}, lik, xtr, ytr);
 for n=1:m
     hyp{n}.cov
     [post{n},nlZ{n}] = posteriorMode(hyp{n}, alpha, cov{n},lik,xtr,ytr); % Determine posterior and -log marginal likelihood
-    [ymu{n},ys2{n},fmu{n},fs2{n}] = predict(hyp{n}, post{n}, cov{n}, piStarMAP, xtr, xte);  % predict
+    [ymu{n},ys2{n},fmu{n},fs2{n}] = predict(hyp{n}, post{n}, cov{n}, piStarAvg, xtr, xte);  % predict
 end
 nlZ
 %% Create the 2D plot
@@ -150,10 +151,10 @@ for n = 1:m
     yNormx(:,n) = ymu2D{1}(:,V(n));
     mmin = min(yNormx(:,n));
     mmax = max(yNormx(:,n));
-    yNormx(:,n) = (yNormx(:,n)-mmin) ./ (mmax-mmin);
+%     yNormx(:,n) = (yNormx(:,n)-mmin) ./ (mmax-mmin);
 %     yNorm(:,n) = 1 - yNorm(:,n);
     pf_xx = pf(xx);
-    yNormx(:,n) = yNormx(:,n) * (max(pf_xx) - min(pf_xx)) + min(pf_xx);
+%     yNormx(:,n) = yNormx(:,n) * (max(pf_xx) - min(pf_xx)) + min(pf_xx);
 
     plot(xx, yNormx(:,n)); % , 'Color',col{n});
     leg{end+1} = sprintf('Row V = %s',num2str(V(n)));

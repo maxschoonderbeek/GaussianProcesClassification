@@ -1,8 +1,9 @@
-function [lp,dlp,d2lp,d3lp] = likLogistic1(y, mu, ~)
+function [lp,dlp,d2lp,d3lp] = likLogistic1(y, mu, s2)
 
 % likLogistic - logistic function for binary classification or logit regression.
 % The expression for the likelihood is 
 %   likLogistic(t) = 1./(1+exp(-t)).
+if numel(y)==0, y = ones(length(mu),1); end
 
 f = mu; yf = y.*f; s = -yf;                   % product latents and labels
 dlp = {}; d2lp = {}; d3lp = {};                         % return arguments
