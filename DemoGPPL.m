@@ -20,8 +20,8 @@ C = num2cell(xtr, 2);
 ytr = cellfun(compare_pf, C);
 
 % Create a grid where we will test our GP on
-nt=200;     % number of training samples
-xx=linspace(-5,5,nt);
+ntr=200;     % number of training samples
+xx=linspace(-5,5,ntr);
 [t1, t2] = meshgrid(xx, xx);
 xte = [t1(:) t2(:)];
 
@@ -39,6 +39,7 @@ lik = @likLogistic1;            % Likelihood
 piStarMAP = @likLogistic1;      % MAP prediction
 piStarAvg = @cdfLogistic;       % Averaged prediction 
 piStarErf = @predErf;
+piStarProbit = @predProbit;     % Class prediction as in MacKay
 
 % dbstop posteriorMode
 % dbstop predict
@@ -55,7 +56,7 @@ hyp{2} = optimizeHyp(hyp{1}, -50, inference, cov{2}, lik, xtr, ytr);
 for n=1:m
     hyp{n}.cov
     [post{n},nlZ{n}] = posteriorMode(hyp{n}, alpha, cov{n},lik,xtr,ytr); % Determine posterior and -log marginal likelihood
-    [ymu{n},ys2{n},fmu{n},fs2{n}] = predict(hyp{n}, post{n}, cov{n}, piStarAvg, xtr, xte);  % predict
+    [ymu{n},ys2{n},fmu{n},fs2{n}] = predict(hyp{n}, post{n}, cov{n},lik, piStarProbit, xtr, xte);  % predict
 end
 nlZ
 %% Create the 2D plot
@@ -65,7 +66,7 @@ for n =1:m
     % axis off;
     colormap('gray');
 %     ymu2D{n} = vec2mat(ymu{n}, nt); % should be a standard matlab function
-    ymu2D{n} = reshape(ymu{n},nt, [])';
+    ymu2D{n} = reshape(ymu{n},ntr, [])';
     imagesc(xx,xx,ymu2D{n});
     axis tight
     xlabel('u')
@@ -85,27 +86,25 @@ end
 figure; hold on;
 plot(xx, pf(xx));
 leg = {'Orig function'};
-yNorm = zeros(nt,m);
+yNorm = zeros(ntr,m);
 for n = 1:m
     yNorm(:,n) = sum(ymu2D{n});
+    yNorm(:,n) =  - yNorm(:,n);
     mmin = min(yNorm(:,n));
     mmax = max(yNorm(:,n));
     yNorm(:,n) = (yNorm(:,n)-mmin) ./ (mmax-mmin);
-    yNorm(:,n) = 1 - yNorm(:,n);
     pf_xx = pf(xx);
     yNorm(:,n) = yNorm(:,n) * (max(pf_xx) - min(pf_xx)) + min(pf_xx);
-
     plot(xx, yNorm(:,n), 'Color',col{n});
     leg{end+1} = sprintf('Cov = %s',func2str(cov{n}));
 end
 
 
-ys2Norm = zeros(nt,m); % Normalized variance for functions
+ys2Norm = zeros(ntr,m); % Normalized variance for functions
+% calculate the variance for the reconstructed regression line
 for n=1:m
-    % calculate the variance for the reconstructed regression line
-%     ys2D = vec2mat(ys2{n}, nt);
-    ys2D = reshape(ys2{n}, nt, [])';
-    ys2Norm(:,n) = sum(ys2D) / nt;
+    ys2D = reshape(ys2{n}, ntr, [])';
+    ys2Norm(:,n) = sum(ys2D) / ntr;
     f = [yNorm(:,n)+2*sqrt(ys2Norm(:,n)); flipud(yNorm(:,n)-2*sqrt(ys2Norm(:,n)))];
     fill([xx'; flipdim(xx', 1)], f, col{n},'EdgeColor',col{n},'FaceAlpha',0.1,'EdgeAlpha',0.3);
 end
@@ -138,54 +137,29 @@ fprintf('Number of comparisons wrong: %d of %d\n', sum(errors),length(correct));
 
 
 %% plot various functions on one line
+
 figure; hold all;
-plot(xx, pf(xx),'b');
-plot(xx, yNorm(:,1),'r');
-leg = {'Orig function'};
-leg{end+1} = {'Averaged function'};
 % Choose some v:
 V = 1:2:200;
 m = length(V);
-yNormx = zeros(nt,m);
+yNormx = zeros(ntr,m);
+
+yN = sum(ymu2D{1})/ntr;
+yN = -yN;
+plot(xx, yN,'r');
+leg = {'Averaged function'};
+
 for n = 1:m
     yNormx(:,n) = ymu2D{1}(:,V(n));
     mmin = min(yNormx(:,n));
     mmax = max(yNormx(:,n));
-%     yNormx(:,n) = (yNormx(:,n)-mmin) ./ (mmax-mmin);
-%     yNorm(:,n) = 1 - yNorm(:,n);
-    pf_xx = pf(xx);
-%     yNormx(:,n) = yNormx(:,n) * (max(pf_xx) - min(pf_xx)) + min(pf_xx);
-
     plot(xx, yNormx(:,n)); % , 'Color',col{n});
     leg{end+1} = sprintf('Row V = %s',num2str(V(n)));
 end
-
-
-% ys2Norm = zeros(nt,m); % Normalized variance for functions
-% for n=1:m
-%     % calculate the variance for the reconstructed regression line
-%     ys2D = reshape(ys2{1}, nt, [])';
-%     ys2Norm(:,n) = ys2D(:,V(n));
-%     f = [yNorm(:,n)+2*sqrt(ys2Norm(:,n)); flipud(yNorm(:,n)-2*sqrt(ys2Norm(:,n)))];
-%     fill([xx'; flipdim(xx', 1)], f, col{n},'EdgeColor',col{n},'FaceAlpha',0.1,'EdgeAlpha',0.3);
-% end
-
-plot(xx, pf(xx),'b','linewidth',3);
-plot(xx, yNorm(:,1),'r','linewidth',3);
-
+plot(xx, yN,'r','linewidth',3);
 xlabel('\theta')
 ylabel('Normalized f(\theta)')
 title('Preference function')
-% legend(leg,'Location','best')
-
-% We then find the maxima of our prediction and of the preference function
-% We print the absolute distance between (smallest step size is 0.25
-% because of the grid (see line 28)). We also take the difference between
-% the two points (on the preference function).
-[ymx, loc2] = max(pf_xx);
+[ymx, loc2] = max(yNormx);
 plot(xx(loc2), ymx, 'bo');
-% for n = 1:m
-%     [ymx, loc1] = max(yNorm(:,n));
-%     plot(xx(loc1), ymx, 'o', 'Color', col{n});
-% end
 

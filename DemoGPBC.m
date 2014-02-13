@@ -25,8 +25,8 @@ fmu{1} = 0; fs2{1} = 0;
 cov = @covSqExp;                % Covarience kernel
 inference = @inferLaplace;      % Inference function
 lik = @likLogistic1;            % Likelihood 
-% piStarMAP = @predMAP;      % MAP prediction
-piStarPred = @classPred;        % Class prediction as in Bishop p
+piStarMAP = @predMAP;           % MAP prediction
+piStarProbit = @predProbit;     % Class prediction as in MacKay
 piStarAvg = @cdfLogistic;       % Averaged prediction 
 piStarErf = @predErf;           % Class prediction with Error function
 
@@ -35,7 +35,7 @@ tic
 hyp0.lik = [];
 
 % dbstop in inference
-dbstop in predict
+% dbstop in predict
 % dbstop in optimizeHyp
 % dbstop in posteriorMode
 % dbstop in brentmin
@@ -47,7 +47,6 @@ hyp.cov
 alpha = zeros(ntr,1);
 % log marginal liklihood and posterior
 [post{2},nlZ(2)] = posteriorMode(hyp, alpha, cov,lik,xtr,ytr); % without stored 'alpha'
-% Predict
 Pred = {@origFunction,@predMAP,@cdfLogistic,@predApproxProbit,@predErf};
 m=length(Pred);
 for n = 2:m
@@ -62,18 +61,19 @@ for n=1:m
   plot(xte,ymu{n},'Color',col{n},'LineWidth',2)
   leg{end+1} = sprintf('%s',func2str(Pred{n}));
 end
-% plot(xte,fmu{2},'Color',col{6},'LineWidth',2)
-% leg{end+1} = sprintf('fmu (latent)');
-% ysd = sdscale*sqrt(fs2{2});
-% fill([xte;flipud(xte)],[fmu{i}+ysd;flipud(fmu{i}-ysd)],...
-%      col{2},'EdgeColor',col{6},'FaceAlpha',0.1,'EdgeAlpha',0.3);
-% ylim([-5 5])
 
 for i=1:m
   ysd = sdscale*sqrt(ys2{i});
   fill([xte;flipud(xte)],[ymu{i}+ysd;flipud(ymu{i}-ysd)],...
        col{i},'EdgeColor',col{i},'FaceAlpha',0.1,'EdgeAlpha',0.3);
 end
+
+% plot(xte,fmu{2},'Color',col{6},'LineWidth',2)
+% leg{end+1} = sprintf('fmu (latent)');
+% ysd = sdscale*sqrt(fs2{2});
+% fill([xte;flipud(xte)],[fmu{i}+ysd;flipud(fmu{i}-ysd)],...
+%      col{2},'EdgeColor',col{6},'FaceAlpha',0.1,'EdgeAlpha',0.3);
+% ylim([-5 5])
 
 plot(xtr,ytr,'k+'), plot(xtr,ytr,'ko'), legend(leg,'Location','best')
 
