@@ -87,6 +87,7 @@ figure; hold on;
 plot(xx, pf(xx));
 leg = {'Orig function'};
 yNorm = zeros(ntr,m);
+m=1;
 for n = 1:m
     yNorm(:,n) = sum(ymu2D{n});
     yNorm(:,n) =  - yNorm(:,n);
