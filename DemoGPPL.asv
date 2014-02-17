@@ -149,9 +149,9 @@ yN = sum(ymu2D{1})/ntr;
 yN = -yN;
 plot(xx, yN,'r');
 leg = {'Averaged function'};
-[yMx, loc1] = max(yN);
+[yMx, loc1] = max(yNormx);
 plot(xx(loc1),yMx,'bo')
-leg{end+1} = sprintf('Maximum');
+leg{end+1} = {'Maximum'};
 
 for n = 1:m
     yNormx(:,n) = ymu2D{1}(:,V(n));
@@ -162,14 +162,12 @@ for n = 1:m
 end
 plot(xx, yN,'r','linewidth',3);
 plot(xx(loc1),yMx,'bo','linewidth',3)
-
 xlabel('\theta')
 ylabel('Normalized f(\theta)')
 title('Preference function')
-
+legend(leg,
 [ymx, loc2] = max(yNormx);
 plot(xx(loc2), ymx, 'bo');
-legend(leg,'Location','best')
-% figure
-% plot(loc2)
+figure
+plot(loc2)
 
