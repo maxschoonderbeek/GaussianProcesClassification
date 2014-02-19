@@ -4,8 +4,7 @@ format compact
 
 % You can adjust this:
 % Preference function of the user (considered unknown)
-% pf = @(x) -0.06*x.^4 - 0.08*x.^3 + 0.6*x.^2 + 0.6*x;
-pf = @(x) 0.1*(-0.129*x.^4 - 0.1*x.^3 + 2.82*x.^2 + 3*x);
+pf = @(x) -0.129*x.^4 - 0.1*x.^3 + 2.82*x.^2 + 3*x + 15;
 % pf = @(x) 5*x.^3 + 3*x.^2 - 80*x + 200;
 % The number of training samples
 M = 40;

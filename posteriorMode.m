@@ -27,29 +27,25 @@ Psi_new = Psi(a,K,lik,y);
 Psi_old = Inf;  % make sure while loop starts by the largest old objective val
 it = 0;                          % this happens for the Student's t likelihood
 s = 0.6;                                        % Step-size in direction of da
-a_new = a;
 
 %% run Newton algorithm
 while Psi_old - Psi_new > tol && it<maxit                       
-    Psi_old = Psi_new; it = it+1;
-    a_old = a_new;
+    Psi_old = Psi_new; a_old = a; it = it+1;  
 
     sW = sqrt(W); 
     L = chol(eye(n)+sW*sW'.*K);             % L'*L=B=eye(n)+sW*K*sW
     b = W.*f + dlp;                         % \
     B = sW.*(K*b);                          % | eq. (3.18) using eq. (3.27)
-    a = b - sW.*(L\(L'\B));                 % /
-    da = a - a_old;                         % Newton dir
+    da = b - sW.*(L\(L'\B)) - a_old;        % / Newton direction
     
     % Without line search:
-    a_new = a_old + s*da;                   % Take smaller steps
-    f = K*a_new;                            
+    a = a_old + s*da;                       % Take smaller steps
+    f = K*a;                            
     [lp,dlp,d2lp] = lik(y,f); W = -d2lp;    % Take W from the likelihood function 
-    Psi_new = a_new'*f/2 - sum(lp);
+    Psi_new = a'*f/2 - sum(lp);
     
     % With line search:
-%     [s_line,Psi_new,n_line,dPsi_new,f,a_new,dlp,W] = search_line(a_old,da);
-    
+%     [s_line,Psi_new,n_line,dPsi_new,f,a_new,dlp,W] = search_line(a_old,da);   
 end 
 it;
 f = K*a;                                  % compute latent function values
@@ -58,7 +54,7 @@ post.alpha = a;                            % return the posterior parameters
 post.sW = sqrt(abs(W)).*sign(W);             % preserve sign in case of negative
 post.L = chol(eye(n)+sW*sW'.*K);                   % recompute
 post.f = f;                                     
-logq = a'*f/2 + sum(log(diag(post.L))-lp);   % ..(f-m)/2 -lp +ln|B|/2
+logq = a'*f/2 + sum(log(diag(post.L))-lp);   % ..a'*f/2 -lp +ln|B|/2 (3.32)
 
 %% Psi function
 % Evaluate criterion Psi(alpha) = alpha'*K*alpha + likfun(f), where 

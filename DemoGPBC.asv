@@ -47,8 +47,8 @@ hyp.cov
 alpha = zeros(ntr,1);
 % log marginal liklihood and posterior
 [post{2},nlZ(2)] = posteriorMode(hyp, alpha, cov,lik,xtr,ytr); % without stored 'alpha'
-Pred = {@origFunction,@predMAP,@cdfLogistic,@predProbit,@predErf};
-Pred = {@origFunction,@predProbit}
+Pred = {@origFunction,@predMAP,@cdfLogistic,@predApproxProbit,@predErf};
+Pred = {@origFunction,@
 m=length(Pred);
 for n = 2:m
     [ymu{n}, ys2{n},fmu{n},fs2{n}] = predict(hyp, post{2}, cov,lik, Pred{n}, xtr, xte);  % predict
